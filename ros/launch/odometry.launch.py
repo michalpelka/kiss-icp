@@ -42,7 +42,7 @@ class config:
     deskew: bool = False
 
     #  Mapping parameters
-    voxel_size: float = max_range / 100.0
+    voxel_size: float = max_range / 500.0
     max_points_per_voxel: int = 20
 
     # Adaptive threshold

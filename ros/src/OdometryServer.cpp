@@ -25,7 +25,7 @@
 #include <sophus/se3.hpp>
 #include <utility>
 #include <vector>
-
+#include <fstream>
 // KISS-ICP-ROS
 #include "OdometryServer.hpp"
 #include "Utils.hpp"
@@ -79,7 +79,7 @@ OdometryServer::OdometryServer(const rclcpp::NodeOptions &options)
     publish_debug_clouds_ = declare_parameter<bool>("publish_debug_clouds", publish_debug_clouds_);
     position_covariance_ = declare_parameter<double>("position_covariance", 0.1);
     orientation_covariance_ = declare_parameter<double>("orientation_covariance", 0.1);
-
+    timer_ = create_wall_timer(std::chrono::seconds(5), std::bind(&OdometryServer::TimerCallback, this));
     kiss_icp::pipeline::KISSConfig config;
     config.max_range = declare_parameter<double>("max_range", config.max_range);
     config.min_range = declare_parameter<double>("min_range", config.min_range);
@@ -183,6 +183,24 @@ void OdometryServer::PublishOdometry(const Sophus::SE3d &kiss_pose,
     odom_publisher_->publish(std::move(odom_msg));
 }
 
+void OdometryServer::TimerCallback()
+{
+    const auto kiss_map = kiss_icp_->LocalMap();
+    static int i= 0;
+    std::thread t([kiss_map]() {
+        char fname[100];
+        sprintf(fname, "/tmp/map_%d.txt", i);
+        std::ofstream file (fname);
+        for (const auto &point : kiss_map) {
+            file << point.x() << " " << point.y() << " " << point.z() << std::endl;
+        }
+        file.close();
+        std::cerr << "Map saved to " << fname << std::endl;
+    });
+    t.detach();
+    i++;
+
+}
 void OdometryServer::PublishClouds(const std::vector<Eigen::Vector3d> frame,
                                    const std::vector<Eigen::Vector3d> keypoints,
                                    const std_msgs::msg::Header &header) {

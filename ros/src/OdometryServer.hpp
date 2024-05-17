@@ -56,6 +56,8 @@ private:
                        const std::vector<Eigen::Vector3d> keypoints,
                        const std_msgs::msg::Header &header);
 
+    void TimerCallback();
+
 private:
     /// Tools for broadcasting TFs.
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
@@ -73,6 +75,8 @@ private:
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr kpoints_publisher_;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_publisher_;
 
+    // timer to save pointcloud
+    rclcpp::TimerBase::SharedPtr timer_;
     /// KISS-ICP
     std::unique_ptr<kiss_icp::pipeline::KissICP> kiss_icp_;
 
@@ -83,6 +87,7 @@ private:
     /// Covariance diagonal
     double position_covariance_;
     double orientation_covariance_;
+
 };
 
 }  // namespace kiss_icp_ros
